@@ -13,6 +13,7 @@ class BoxOfficeSpec extends TestKit(ActorSystem("testTickets"))
   "The BoxOffice" must {
 
     "Create an event and get tickets from the correct Ticket Seller" in {
+      fail("not implemented")
       // write test
 
       // get protocol

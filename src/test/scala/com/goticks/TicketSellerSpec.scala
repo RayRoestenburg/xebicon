@@ -12,6 +12,8 @@ class TicketSellerSpec extends TestKit(ActorSystem("testTickets"))
                          with StopSystemAfterAll {
   "The TicketSeller" must {
     "Give out tickets until they are sold out" in {
+      fail("not implemented")
+
       // write test
 
       // get protocol

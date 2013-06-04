@@ -2,7 +2,6 @@ package com.goticks
 
 import com.typesafe.config.ConfigFactory
 import akka.actor.{Props, ActorSystem}
-import com.goticks.BoxOffice
 
 object ClusterMain extends App {
 

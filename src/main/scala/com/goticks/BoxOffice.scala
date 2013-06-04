@@ -5,7 +5,10 @@ import concurrent.Future
 import scala.concurrent.duration._
 import akka.util.Timeout
 
-//BoxOffice
+// implement BoxOffice
+class BoxOffice extends Actor {
+  def receive = { case msg => }
+}
   // import protocol
   // timeout for ask
   // Event =>
