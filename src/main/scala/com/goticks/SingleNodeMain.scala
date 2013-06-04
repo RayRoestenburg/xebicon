@@ -5,15 +5,11 @@ import akka.actor.{Props, ActorSystem}
 import spray.can.Http.Bind
 import spray.can.Http
 
-// SingleNodeMain app
-
-  // get config singlenode
-
-  //get host
-  //get port
-
-  // create system
-
-  // create restInterface
-
-  // Http ext, manager, bind restInterface, host, port
+object SingleNodeMain extends App {
+  val config = ConfigFactory.load("singlenode")
+  val host = config.getString("http.host")
+  val port = config.getInt("http.port")
+  val system = ActorSystem("goticks", config)
+  val restInterface = system.actorOf(Props[RestInterface],"restInterface")
+  Http(system).manager ! Bind(listener = restInterface, interface = host, port = port)
+}

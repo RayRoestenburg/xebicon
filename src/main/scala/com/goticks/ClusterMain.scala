@@ -2,13 +2,17 @@ package com.goticks
 
 import com.typesafe.config.ConfigFactory
 import akka.actor.{Props, ActorSystem}
+import com.goticks.BoxOffice
 
-// clusterMain
+object ClusterMain extends App {
 
-// get args(0) as NETTY PORT
+  if(args.size == 1) {
+    System.setProperty("NETTY_PORT",args(0))
+  }
 
-// get cluster config
+  val config = ConfigFactory.load("cluster")
 
-// create goticks system with config
+  val system = ActorSystem("goticks", config)
+  system.actorOf(Props[BoxOffice], "boxOffice")
 
-// create boxOffice
+}
