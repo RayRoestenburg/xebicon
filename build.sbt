@@ -18,7 +18,7 @@ resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/re
 
 libraryDependencies ++= {
   val akkaVersion       = "2.2-M3"
-  val sprayVersion      = "1.2-M8-SNAPSHOT"
+  val sprayVersion      = "1.2-M8-SNAPSHOT"  // I built this locally, It's not out yet.
   Seq(
     "com.typesafe.akka"       %%  "akka-actor"                     % akkaVersion,
     "com.typesafe.akka"       %%  "akka-slf4j"                     % akkaVersion,
