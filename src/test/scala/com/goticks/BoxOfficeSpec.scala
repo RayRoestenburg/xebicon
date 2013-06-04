@@ -13,17 +13,19 @@ class BoxOfficeSpec extends TestKit(ActorSystem("testTickets"))
   "The BoxOffice" must {
 
     "Create an event and get tickets from the correct Ticket Seller" in {
-      import TicketProtocol._
+      // write test
 
-      val ticketMaster = system.actorOf(Props[BoxOffice])
-      ticketMaster ! Event("RHCP", 10)
-      expectMsg(EventCreated)
+      // get protocol
 
-      ticketMaster ! TicketRequest("RHCP")
-      expectMsg(Ticket("RHCP", 1))
+      // create boxOffice
 
-      ticketMaster ! TicketRequest("DavidBowie")
-      expectMsg(SoldOut)
+      // send Event
+
+      // expect EventCreated
+
+      // send TicketRequest
+
+      // expect Ticket
 
     }
   }

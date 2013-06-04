@@ -12,25 +12,29 @@ class TicketSellerSpec extends TestKit(ActorSystem("testTickets"))
                          with StopSystemAfterAll {
   "The TicketSeller" must {
     "Give out tickets until they are sold out" in {
-      import TicketProtocol._
+      // write test
 
-      def mkTickets(event:String) = (1 to 10).map(i=>Ticket(event, i)).toList
+      // get protocol
 
-      val ticketingActor = system.actorOf(Props[TicketSeller])
+      // mk Tickets
 
-      ticketingActor ! Tickets(mkTickets("RHCP"))
-      ticketingActor ! BuyTicket
+      // create ticketSellet
 
-      expectMsg(Ticket("RHCP", 1))
+      // send Tickets
 
-      val nrs = (2 to 10)
-      nrs.foreach(_ => ticketingActor ! BuyTicket)
+      // send BuyTicket
 
-      val tickets = receiveN(9)
-      tickets.zip(nrs).foreach { case (ticket:Ticket, nr) => ticket.nr must be(nr) }
+      // expect Ticket
 
-      ticketingActor ! BuyTicket
-      expectMsg(SoldOut)
+      // 2 to 10 Buy Ticket
+
+      // receiveN9
+
+      // zip with nrs foreach , validate nr
+
+      // buy Ticket
+
+      // expect SoldOut
     }
   }
 }
