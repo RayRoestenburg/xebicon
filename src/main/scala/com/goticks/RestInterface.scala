@@ -8,6 +8,18 @@ import spray.httpx.SprayJsonSupport._
 import spray.routing.RequestContext
 import akka.util.Timeout
 import scala.concurrent.duration._
+import akka.cluster.routing.{ClusterRouterSettings, ClusterRouterConfig}
+import akka.routing.{Broadcast, BroadcastRouter, ConsistentHashingRouter}
+import akka.cluster.ClusterEvent._
+import akka.cluster.Cluster
+import spray.routing.RequestContext
+import akka.cluster.ClusterEvent.MemberUp
+import akka.cluster.routing.ClusterRouterConfig
+import scala.Some
+import akka.routing.Broadcast
+import akka.cluster.ClusterEvent.CurrentClusterState
+import akka.cluster.ClusterEvent.UnreachableMember
+import com.goticks.TicketProtocol.{Event, Events}
 
 class RestInterface extends HttpServiceActor
                     with RestApi {
@@ -23,8 +35,25 @@ trait RestApi extends HttpService with ActorLogging with BoxOfficeCreator { acto
 
   val boxOffice = createBoxOffice
 
-  def routes: Route =
+  val broadcast = context.actorOf(
+    Props[BoxOffice].withRouter(
+      ClusterRouterConfig(BroadcastRouter(),
+        ClusterRouterSettings(10000,"/user/boxOffice",false,Some("boxOffice")))
+    )
+  )
 
+  val clusterListener = system.actorOf(Props[ClusterListener],
+    name = "clusterListener")
+  Cluster(system).subscribe(clusterListener, classOf[ClusterDomainEvent])
+
+
+  def routes: Route =
+    path("clusterevents") {
+      get { ctx =>
+        clusterListener ! ctx
+        boxOffice.tell(Broadcast(GetEvents),clusterListener)
+      }
+    } ~
     path("events") {
       put {
         entity(as[Event]) { event => requestContext =>
@@ -46,7 +75,7 @@ trait RestApi extends HttpService with ActorLogging with BoxOfficeCreator { acto
         }
       }
     } ~
-    path("ticket" / PathElement) { eventName =>
+    path("ticket" / Segment) { eventName =>
       get { ctx =>
         val req = TicketRequest(eventName)
         val responder = createResponder(ctx)
@@ -88,5 +117,58 @@ class Responder(requestContext:RequestContext, boxOffice:ActorRef) extends Actor
       context.setReceiveTimeout(Duration.Undefined)
       self ! PoisonPill
 
+  }
+}
+
+class ClusterListener extends Actor with ActorLogging {
+  import spray.httpx.SprayJsonSupport._
+  var memberAddresses = Set[Address]()
+  var nrOfMembers = 0
+  var eventsReceived = 0
+  var events = List[Event]()
+  var ctx:Option[RequestContext] = None
+
+  def receive = {
+    case state: CurrentClusterState ⇒
+      log.info("Current members: {}", state.members.mkString(", "))
+      memberAddresses = state.members.filter(_.hasRole("boxOffice")).map(_.address).toSet
+
+    case MemberUp(member) ⇒
+      log.info("Member is Up: {}", member.address)
+      if(member.hasRole("boxOffice")){
+        memberAddresses = memberAddresses + member.address
+        log.info(s"Member up, now ${memberAddresses.size} boxOffice members.")
+      }
+    case UnreachableMember(member) ⇒
+      log.info("Member detected as unreachable: {}", member)
+      if(member.hasRole("boxOffice")){
+        memberAddresses = memberAddresses - member.address
+        log.info(s"Unreachable node, ${memberAddresses.size} boxOffice members left.")
+      }
+    case MemberRemoved(member) ⇒
+      log.info("Member is Removed: {}",
+        member.address)
+      if(member.hasRole("boxOffice")) {
+        memberAddresses = memberAddresses - member.address
+
+        log.info(s"Member removed, ${memberAddresses.size} boxOffice members left.")
+      }
+    case Events(receivedEvents) =>
+      log.info(s"$eventsReceived events collected so far.")
+       eventsReceived = eventsReceived + 1
+       events = events ++ receivedEvents
+
+       if(eventsReceived == memberAddresses.size) {
+         log.info(s"Received all events from all boxOffice members $events")
+         ctx.foreach(c=> c.complete(StatusCodes.OK,events))
+         events = List()
+         eventsReceived = 0
+       }
+
+    case newCtx: RequestContext =>
+      eventsReceived = 0
+      ctx = Some(newCtx)
+
+    case _: ClusterDomainEvent ⇒ // ignore
   }
 }

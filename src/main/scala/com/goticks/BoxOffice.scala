@@ -6,27 +6,44 @@ import scala.concurrent.duration._
 import akka.util.Timeout
 
 // implement BoxOffice
-class BoxOffice extends Actor {
-  def receive = { case msg => }
-}
-  // import protocol
-  // timeout for ask
-  // Event =>
-  // TicketRequest =>
+class BoxOffice extends Actor with ActorLogging {
+  import TicketProtocol._
+  import context._
 
-//    case GetEvents =>
-//      import akka.pattern.ask
-//
-//      val capturedSender = sender
-//
-//      def askAndMapToEvent(ticketSeller:ActorRef) =  {
-//
-//        val futureInt = ticketSeller.ask(GetEvents).mapTo[Int]
-//
-//        futureInt.map(nrOfTickets => Event(ticketSeller.actorRef.path.name, nrOfTickets))
-//      }
-//      val futures = context.children.map(ticketSeller => askAndMapToEvent(ticketSeller))
-//
-//      Future.sequence(futures).map { events =>
-//        capturedSender ! Events(events.toList)
-//      }
+  def receive = {
+    case Event(name, nrOfTickets) =>
+      if(child(name).isEmpty) {
+        log.info(s"Creating Event $name with $nrOfTickets tickets")
+        val ticketSeller = context.actorOf(Props[TicketSeller], name)
+        val tickets = (1 to nrOfTickets).map(nr=> Ticket(name,nr)).toList
+        ticketSeller ! Tickets(tickets)
+        sender ! EventCreated
+      }
+    case TicketRequest(event) =>
+      log.info(s"Ticket request for $event")
+      child(event) match {
+        case Some(seller)=>  seller forward BuyTicket
+        case None => sender ! SoldOut
+      }
+
+    case GetEvents =>
+      log.info("Get nr of tickets per event")
+
+      implicit val timeout = Timeout(30 seconds)
+      import akka.pattern.ask
+
+      val capturedSender = sender
+
+      def askEvent(ticketSeller:ActorRef):Future[Event] = {
+        ticketSeller.ask(GetEvents).mapTo[Event]
+      }
+
+      val listOfFutures = children.map { child =>
+        askEvent(child)
+      }.toList
+
+      val futureOfList = Future.sequence(listOfFutures)
+      futureOfList.map( list => capturedSender ! Events(list))
+
+  }
+}

@@ -1,12 +1,21 @@
 package com.goticks
 
 import com.typesafe.config.ConfigFactory
-import akka.actor.{ActorRef, Actor, Props, ActorSystem}
+import akka.actor._
 import spray.can.Http.Bind
 import spray.can.Http
 import akka.cluster.routing.{ClusterRouterSettings, ClusterRouterConfig}
 import akka.routing.{ConsistentHashingRouter}
 import com.goticks.TicketProtocol.{TicketRequest, Event}
+import akka.cluster.ClusterEvent._
+import akka.cluster.Cluster
+import akka.cluster.routing.ClusterRouterConfig
+import scala.Some
+import akka.cluster.ClusterEvent.CurrentClusterState
+import akka.cluster.ClusterEvent.MemberUp
+import akka.cluster.routing.ClusterRouterConfig
+import scala.Some
+import akka.cluster.ClusterEvent.UnreachableMember
 
 object FrontendClusterMain extends App {
 
@@ -31,7 +40,9 @@ object FrontendClusterMain extends App {
     interface = host,
     port =port)
 
+
 }
+
 
 trait ClusteredBoxOffice extends BoxOfficeCreator { this: Actor =>
   override def createBoxOffice:ActorRef = {

@@ -11,5 +11,6 @@ object SingleNodeMain extends App {
   val port = config.getInt("http.port")
   val system = ActorSystem("goticks", config)
   val restInterface = system.actorOf(Props[RestInterface],"restInterface")
+
   Http(system).manager ! Bind(listener = restInterface, interface = host, port = port)
 }
