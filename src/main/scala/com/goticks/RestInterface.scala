@@ -5,17 +5,15 @@ import akka.actor._
 import spray.routing._
 import spray.http.StatusCodes
 import spray.httpx.SprayJsonSupport._
-import spray.routing.RequestContext
 import akka.util.Timeout
 import scala.concurrent.duration._
-import akka.cluster.routing.{ClusterRouterSettings, ClusterRouterConfig}
-import akka.routing.{Broadcast, BroadcastRouter, ConsistentHashingRouter}
+import akka.cluster.routing.{ClusterRouterSettings}
+import akka.routing.{BroadcastRouter}
 import akka.cluster.ClusterEvent._
 import akka.cluster.Cluster
 import spray.routing.RequestContext
 import akka.cluster.ClusterEvent.MemberUp
 import akka.cluster.routing.ClusterRouterConfig
-import scala.Some
 import akka.routing.Broadcast
 import akka.cluster.ClusterEvent.CurrentClusterState
 import akka.cluster.ClusterEvent.UnreachableMember
